@@ -1,82 +1,155 @@
 let savedData = localStorage.getItem("folders");
 let FolderList = savedData && Array.isArray(JSON.parse(savedData)) ? JSON.parse(savedData) : [];
 
+let activePathString = "";
+let activeAction = null; 
+
 let addbtn = document.getElementById("add");
 addbtn.addEventListener("click", getname);
 
+const folderModal = new bootstrap.Modal(document.getElementById("folderModal"));
+
 function getname(){
-    document.getElementById("list").innerHTML = `<input id="foldername" type="text">`;
-    document.getElementById("abtn").innerHTML = `<button id="donebtn" onclick="add();" class="btn btn-primary">Done</button>`;
+    activeAction = 'ADD_ROOT';
+    activePathString = "";
+    document.getElementById("modalTitle").innerText = "Add New Folder";
+    document.getElementById("modalInput").value = "";
+    folderModal.show();
 }
 
-function add(){
-    let fname = document.getElementById("foldername");
-    let result = fname.value.trim();
-    
-    if (result === "") return; 
+function getFolderByPath(list, pathStr) {
+    if (!pathStr) return null;
+    let indices = pathStr.split("-").map(Number);
+    let current = list[indices[0]];
+    for (let i = 1; i < indices.length; i++) {
+        if (!current || !current.childfolder) return null;
+        current = current.childfolder[indices[i]];
+    }
+    return current;
+}
 
-    let uniqueId =  Date.now().toString(); 
-    FolderList.push({"id": uniqueId, "foldername": result,"childfolder":"","childfile":""});
+function childfolder(pathStr) {
+    activeAction = 'ADD_CHILD';
+    activePathString = String(pathStr);
+    document.getElementById("modalTitle").innerText = "Add Sub-Folder";
+    document.getElementById("modalInput").value = "";
+    folderModal.show();
+}
+
+document.getElementById("saveModalBtn").addEventListener("click", function(){
+    let inputVal = document.getElementById("modalInput").value.trim();
+    if(inputVal === "") return;
+
+    if(activeAction === 'ADD_ROOT'){
+        let uniqueId = Date.now().toString(); 
+        FolderList.push({
+            "id": uniqueId, 
+            "foldername": inputVal,
+            "childfolder": [],
+            "childfile": []
+        });
+    } else if(activeAction === 'ADD_CHILD'){
+        let targetFolder = getFolderByPath(FolderList, activePathString);
+        if(targetFolder){
+            if(!Array.isArray(targetFolder.childfolder)){
+                targetFolder.childfolder = [];
+            }
+            targetFolder.childfolder.push({
+                "id": Date.now().toString(),
+                "foldername": inputVal,
+                "childfolder": [],
+                "childfile": []
+            });
+        }
+    }
 
     savefoldersToStorage(FolderList);
-    console.log(FolderList);
-    document.getElementById("abtn").innerHTML = `<button id="donebtn" onclick="getname();" class="btn btn-primary">Add New folder</button>`;
+    folderModal.hide();
     showfolder();
-}
+});
+
 function savefoldersToStorage(list) {
     localStorage.setItem("folders", JSON.stringify(list));
 }
 
+function renderFolderTree(list, currentPathStr = "") {
+    let html = "";
+    for (let i = 0; i < list.length; i++) {
+        let item = list[i];
+        let itemPath = currentPathStr === "" ? `${i}` : `${currentPathStr}-${i}`;
+        
+        let depth = itemPath.split("-").length - 1;
+        let indentPadding = depth * 20;
+
+        let childHTML = "";
+        if (item.childfolder && item.childfolder.length > 0) {
+            childHTML = renderFolderTree(item.childfolder, itemPath);
+        }
+
+        html += `
+        <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center hover-trigger" style="padding-left: ${15 + indentPadding}px;">
+            <div>
+                <i class="fa-solid fa-folder me-2"></i>
+                <span id="row-${itemPath}">${item.foldername}</span>
+            </div>
+            
+            <div>
+                <span class="badge bg-secondary opacity-0 hover-target"><i onClick="childfolder('${itemPath}')" class="fa-solid fa-folder-plus" style="cursor:pointer"></i></span>
+                <span class="badge bg-secondary opacity-0 hover-target"><i class="fa-solid fa-file-circle-plus"></i></span>
+                <span class="badge bg-secondary opacity-0 hover-target"><i onClick="editByPath('${itemPath}')" class="fa-solid fa-pen" style="cursor:pointer"></i></span>
+                <span class="badge bg-secondary opacity-0 hover-target"><i onClick="delByPath('${itemPath}')" class="fa-solid fa-trash" style="cursor:pointer"></i></span>
+            </div>
+        </div>
+        ${childHTML}`;
+    }
+    return html;
+}
+
 function showfolder(){
-   let data = ""
-   for(let i=0; i<FolderList.length; i++){
-    data +=  `  <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center hover-trigger">
-    <i class="fa-solid fa-folder"></i><div id="row-${i}">${FolderList[i].foldername}</div>
-    <span class="badge bg-secondary opacity-0 hover-target"><i class="fa-solid fa-folder-plus"></i></span>
-    <span class="badge bg-secondary opacity-0 hover-target"><i class="fa-solid fa-file-circle-plus"></i></span>
-    <span class="badge bg-secondary opacity-0 hover-target"><i onClick="edit(${i})"class="fa-solid fa-pen"></i></span>
-    <span class="badge bg-secondary opacity-0 hover-target"><i onClick="del(${i});" class="fa-solid fa-trash"></i></span>
-    </div>
-    </div>`;
-   }
-   document.getElementById("list").innerHTML = data;
+    document.getElementById("list").innerHTML = renderFolderTree(FolderList);
 }
 
 showfolder();   
- 
-function del(i){
-    FolderList.splice(i,1);
+
+function delByPath(pathStr) {
+    let indices = pathStr.split("-").map(Number);
+    let targetFolder = getFolderByPath(FolderList, pathStr);
+
+    if (targetFolder && targetFolder.childfolder && targetFolder.childfolder.length > 0) {
+        let confirmDelete = confirm(`There are content in "${targetFolder.foldername}" folder, do you want to remove it?`);
+        if (!confirmDelete) return;
+    }
+
+    if (indices.length === 1) {
+        FolderList.splice(indices[0], 1);
+    } else {
+        let parentPath = indices.slice(0, -1).join("-");
+        let parentFolder = getFolderByPath(FolderList, parentPath);
+        let childIndex = indices[indices.length - 1];
+        parentFolder.childfolder.splice(childIndex, 1);
+    }
+
     savefoldersToStorage(FolderList);
     showfolder();
 }
 
-function edit(i){
-  let row = document.getElementById(`row-${i}`);
+function editByPath(pathStr) {
+    let targetFolder = getFolderByPath(FolderList, pathStr);
+    let row = document.getElementById(`row-${pathStr}`);
 
-  row.innerHTML = `<input type="text" id="editfname-${i}" value='${FolderList[i].foldername}'><br>
-                    <i onclick="saveedit(${i})" class="fa-regular fa-floppy-disk"></i>
-                    <i onclick="showfolder();" class="fa-solid fa-xmark"></i>`
+    row.innerHTML = `<input type="text" id="edit-input-${pathStr}" value='${targetFolder.foldername}' style="width: 120px;">
+                    <i onclick="saveEditByPath('${pathStr}')" class="fa-regular fa-floppy-disk ms-1" style="cursor:pointer"></i>
+                    <i onclick="showfolder();" class="fa-solid fa-xmark ms-1" style="cursor:pointer"></i>`;
 }
 
-function saveedit(i){
-    let newfname = document.getElementById(`editfname-${i}`).value.trim();
-    if(newfname){
-        FolderList[i]={
-            "id" : Number(`${FolderList[i].id}`),
-            "foldername" : newfname,
-            "childfolder" : `${FolderList[i].childfolder}`,
-            "childfile" : `${FolderList[i].childfile}`
-
+function saveEditByPath(pathStr) {
+    let inputVal = document.getElementById(`edit-input-${pathStr}`).value.trim();
+    if (inputVal) {
+        let targetFolder = getFolderByPath(FolderList, pathStr);
+        if(targetFolder){
+            targetFolder.foldername = inputVal;
+            savefoldersToStorage(FolderList);
+            showfolder();
         }
     }
-    savefoldersToStorage(FolderList);
-    showfolder();
-}   
-
-
-function childfolder(i){
-       let input = prompt("Enter folder name");
-       if(input){
-        FolderList[i].childfolder.push({"id":})
-       }
 }
