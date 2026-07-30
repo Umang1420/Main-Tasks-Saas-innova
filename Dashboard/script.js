@@ -7,7 +7,7 @@ let activeAction = null;
 let addbtn = document.getElementById("add");
 addbtn.addEventListener("click", getname);
 
-const folderModal = new bootstrap.Modal(document.getElementById("folderModal"));
+let folderModal = new bootstrap.Modal(document.getElementById("folderModal"));
 
 function getname(){
     activeAction = 'ADD_ROOT';
@@ -17,7 +17,7 @@ function getname(){
     folderModal.show();
 }
 
-function getFolderByPath(list, pathStr) {
+function getfolderbypath(list, pathStr) {
     if (!pathStr) return null;
     let indices = pathStr.split("-").map(Number);
     let current = list[indices[0]];
@@ -32,6 +32,13 @@ function childfolder(pathStr) {
     activeAction = 'ADD_CHILD';
     activePathString = String(pathStr);
     document.getElementById("modalTitle").innerText = "Add Sub-Folder";
+    document.getElementById("modalInput").value = "";
+    folderModal.show();
+} 
+
+function childfile(pathstr){
+    activePathString = String(pathstr);
+    document.getElementById("modalTitle").innerText = "Add Sub-File ";
     document.getElementById("modalInput").value = "";
     folderModal.show();
 }
@@ -49,16 +56,21 @@ document.getElementById("saveModalBtn").addEventListener("click", function(){
             "childfile": []
         });
     } else if(activeAction === 'ADD_CHILD'){
-        let targetFolder = getFolderByPath(FolderList, activePathString);
+        let targetFolder = getfolderbypath(FolderList, activePathString);
         if(targetFolder){
-            if(!Array.isArray(targetFolder.childfolder)){
-                targetFolder.childfolder = [];
-            }
             targetFolder.childfolder.push({
                 "id": Date.now().toString(),
                 "foldername": inputVal,
                 "childfolder": [],
                 "childfile": []
+            });
+        }
+    }else {
+        let targetFolder = getfolderbypath(FolderList, activePathString);
+        if(targetFolder){
+            targetFolder.childfile.push({
+                "id": Date.now().toString(),
+                "filename": inputVal
             });
         }
     }
@@ -80,11 +92,12 @@ function renderFolderTree(list, currentPathStr = "") {
         
         let depth = itemPath.split("-").length - 1;
         let indentPadding = depth * 20;
-
+        
         let childHTML = "";
         if (item.childfolder && item.childfolder.length > 0) {
             childHTML = renderFolderTree(item.childfolder, itemPath);
         }
+
 
         html += `
         <div class="list-group-item list-group-item-action d-flex justify-content-between align-items-center hover-trigger" style="padding-left: ${15 + indentPadding}px;">
@@ -95,9 +108,9 @@ function renderFolderTree(list, currentPathStr = "") {
             
             <div>
                 <span class="badge bg-secondary opacity-0 hover-target"><i onClick="childfolder('${itemPath}')" class="fa-solid fa-folder-plus" style="cursor:pointer"></i></span>
-                <span class="badge bg-secondary opacity-0 hover-target"><i class="fa-solid fa-file-circle-plus"></i></span>
-                <span class="badge bg-secondary opacity-0 hover-target"><i onClick="editByPath('${itemPath}')" class="fa-solid fa-pen" style="cursor:pointer"></i></span>
-                <span class="badge bg-secondary opacity-0 hover-target"><i onClick="delByPath('${itemPath}')" class="fa-solid fa-trash" style="cursor:pointer"></i></span>
+                <span class="badge bg-secondary opacity-0 hover-target"><i onClick="childfile('${itemPath}')" class="fa-solid fa-file-circle-plus" style="cursor:pointer"></i></span>
+                <span class="badge bg-secondary opacity-0 hover-target"><i onClick="editbypath('${itemPath}')" class="fa-solid fa-pen" style="cursor:pointer"></i></span>
+                <span class="badge bg-secondary opacity-0 hover-target"><i onClick="delbypath('${itemPath}')" class="fa-solid fa-trash" style="cursor:pointer"></i></span>
             </div>
         </div>
         ${childHTML}`;
@@ -111,9 +124,9 @@ function showfolder(){
 
 showfolder();   
 
-function delByPath(pathStr) {
+function delbypath(pathStr) {
     let indices = pathStr.split("-").map(Number);
-    let targetFolder = getFolderByPath(FolderList, pathStr);
+    let targetFolder = getfolderbypath(FolderList, pathStr);
 
     if (targetFolder && targetFolder.childfolder && targetFolder.childfolder.length > 0) {
         let confirmDelete = confirm(`There are content in "${targetFolder.foldername}" folder, do you want to remove it?`);
@@ -124,7 +137,7 @@ function delByPath(pathStr) {
         FolderList.splice(indices[0], 1);
     } else {
         let parentPath = indices.slice(0, -1).join("-");
-        let parentFolder = getFolderByPath(FolderList, parentPath);
+        let parentFolder = getfolderbypath(FolderList, parentPath);
         let childIndex = indices[indices.length - 1];
         parentFolder.childfolder.splice(childIndex, 1);
     }
@@ -133,19 +146,19 @@ function delByPath(pathStr) {
     showfolder();
 }
 
-function editByPath(pathStr) {
-    let targetFolder = getFolderByPath(FolderList, pathStr);
+function editbypath(pathStr) {
+    let targetFolder = getfolderbypath(FolderList, pathStr);
     let row = document.getElementById(`row-${pathStr}`);
 
     row.innerHTML = `<input type="text" id="edit-input-${pathStr}" value='${targetFolder.foldername}' style="width: 120px;">
-                    <i onclick="saveEditByPath('${pathStr}')" class="fa-regular fa-floppy-disk ms-1" style="cursor:pointer"></i>
+                    <i onclick="saveeditbypath('${pathStr}')" class="fa-regular fa-floppy-disk ms-1" style="cursor:pointer"></i>
                     <i onclick="showfolder();" class="fa-solid fa-xmark ms-1" style="cursor:pointer"></i>`;
 }
 
-function saveEditByPath(pathStr) {
+function saveeditbypath(pathStr) {
     let inputVal = document.getElementById(`edit-input-${pathStr}`).value.trim();
     if (inputVal) {
-        let targetFolder = getFolderByPath(FolderList, pathStr);
+        let targetFolder = getfolderbypath(FolderList, pathStr);
         if(targetFolder){
             targetFolder.foldername = inputVal;
             savefoldersToStorage(FolderList);
