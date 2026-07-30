@@ -24,26 +24,6 @@ The JavaScript file provides these main features:
 
 There is no fixed maximum depth set in the script. Child folders can be created recursively because the project uses nested objects and a recursive rendering function. In practice, the limit depends on browser memory and the size of the folder tree, but the code supports nested folders beyond one level.
 
-## How to access the ID of every child
-
-Each folder and file object has its own id value.
-
-- Folders use the structure: id, foldername, childfolder, childfile
-
-You can access a child by its path string, for example:
-
-```js
-let targetFolder = getfolderbypath(FolderList, "0-1-2");
-console.log(targetFolder.id);
-```
-
-If you want to access a child file inside a folder, use:
-
-```js
-let targetFolder = getfolderbypath(FolderList, "0-1");
-console.log(targetFolder.childfile[0].id);
-```
-
 ## How the data is stored
 
 The script stores all folder data in localStorage under the key:
