@@ -108,7 +108,6 @@ function renderFolderTree(list, currentPathStr = "") {
             
             <div>
                 <span class="badge bg-secondary opacity-0 hover-target"><i onClick="childfolder('${itemPath}')" class="fa-solid fa-folder-plus" style="cursor:pointer"></i></span>
-                <span class="badge bg-secondary opacity-0 hover-target"><i onClick="childfile('${itemPath}')" class="fa-solid fa-file-circle-plus" style="cursor:pointer"></i></span>
                 <span class="badge bg-secondary opacity-0 hover-target"><i onClick="editbypath('${itemPath}')" class="fa-solid fa-pen" style="cursor:pointer"></i></span>
                 <span class="badge bg-secondary opacity-0 hover-target"><i onClick="delbypath('${itemPath}')" class="fa-solid fa-trash" style="cursor:pointer"></i></span>
             </div>
