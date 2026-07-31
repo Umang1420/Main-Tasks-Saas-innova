@@ -7,36 +7,68 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
     <div class="container">
         <div class="content">
-            <div  class="game-box">
+
+            <div class="game-box">
+
                 <h1>Tic Tac Toe</h1>
+
                 <div id="game-box">
-                <div id="input-box" class="input-box">
-                    <div id="pl1div" class="player1">
-                        <label>Player 1 <i class="fa-solid fa-x fa-xs"></i></label><br>
-                        <input type="text" id="player1" placeholder="Enter Name">
+
+                    <div class="mode-box">
+                        <button onclick="showTwoPlayer()">2 Players</button>
+                        <button onclick="showComputer()">Vs Computer</button>
                     </div>
-                    <div id="games">
-                 
+
+                    <div id="input-box" class="input-box">
+
+                        <div class="player1">
+                            <label>
+                                Player 1
+                                <i class="fa-solid fa-x fa-xs"></i>
+                            </label>
+                            <br>
+                            <input
+                                type="text"
+                                id="player1"
+                                placeholder="Enter Name">
+                        </div>
+
+                        <div id="pl2div" class="player2">
+                            <label>
+                                Player 2
+                                <i class="fa-solid fa-o fa-xs"></i>
+                            </label>
+                            <br>
+                            <input
+                                type="text"
+                                id="player2"
+                                placeholder="Enter Name">
+                        </div>
+
                     </div>
-                    <div id="pl2div" class="player2">
-                        <label>Player 2 <i class="fa-solid fa-o fa-xs"></i></label><br>
-                        <input type="text" id="player2" placeholder="Enter Name">
-                    </div>
+
                 </div>
-                </div>
+
                 <div class="game">
+
                     <div id="btns" class="btns">
-                       <button id="start" onclick="scorecard();">Start the Game</button>
+                        <button id="start" onclick="scorecard()">
+                            Start Game
+                        </button>
                     </div>
-                   
+
                 </div>
-                
-            
+
+            </div>
+
         </div>
     </div>
+
+    <script src="script.js"></script>
+    <script src="https://kit.fontawesome.com/60b76f61c8.js" crossorigin="anonymous"></script>
+
 </body>
-<script src="script.js" defer></script>
-<script src="https://kit.fontawesome.com/60b76f61c8.js" crossorigin="anonymous"></script>
 </html>

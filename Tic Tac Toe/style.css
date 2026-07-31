@@ -131,3 +131,43 @@ button{
     padding: 10px;
     border-radius: 20px;
 }
+/* Winner Banner Styling */
+.winner-msg {
+    width: 100%;
+    max-width: 320px;
+    padding: 25px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    text-align: center;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+    margin: 20px auto;
+    animation: popup 0.3s ease-in-out;
+}
+
+.winner-msg h2 {
+    color: #00416a;
+    font-size: 1.6rem;
+    margin-top: 8px;
+}
+
+.trophy-icon {
+    font-size: 2.5rem;
+    color: #f1c40f;
+}
+
+.draw-msg .trophy-icon {
+    color: #7f8c8d;
+}
+
+/* Winning Box Glow */
+.win-tile {
+    background-color: #27ae60 !important;
+    border-color: #2ecc71 !important;
+    transform: scale(1.05);
+    transition: all 0.3s ease;
+}
+
+@keyframes popup {
+    0% { transform: scale(0.7); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}

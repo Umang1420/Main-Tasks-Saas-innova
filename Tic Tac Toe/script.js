@@ -2,129 +2,193 @@ let start = document.getElementById("start");
 let player1 = document.getElementById("player1");
 let player2 = document.getElementById("player2");
 
-
-
-let winPatterns = [ [0, 1, 2], [3, 4, 5],
-                    [0, 3, 6], [1, 4, 7],
-                    [0, 4, 8], [2, 5, 8], 
-                    [2, 4, 6], [6, 7, 8] ];
-    
+let mode = "two";
 let board = [];
 let turnO = false;
-let gameActive = true; 
-let xscore=0;
-let oscore=0;
+let gameActive = true;
+let xscore = 0;
+let oscore = 0;
 let gamesplayed = 1;
+
+const winPatterns = [
+    [0, 1, 2], [3, 4, 5], [6, 7, 8],
+    [0, 3, 6], [1, 4, 7], [2, 5, 8],
+    [0, 4, 8], [2, 4, 6]
+];
+
+function showTwoPlayer() {
+    mode = "two";
+    document.getElementById("pl2div").style.display = "block";
+}
+
+function showComputer() {
+    mode = "computer";
+    document.getElementById("pl2div").style.display = "none";
+}
+
+function scorecard() {
+    let player1name = player1.value.trim();
+    if (!player1name) {
+        alert("ADD PLAYER NAME!");
+        return;
+    }
+
+    let player2name = "";
+    if (mode === "two") {
+        player2name = player2.value.trim();
+        if (!player2name) {
+            alert("ADD PLAYER 2 NAME!");
+            return;
+        }
+    } else {
+        player2name = "Computer";
+    }
+
+    document.getElementById("game-box").innerHTML = `
+        <div class="scorecard">
+            <div class="gamenumber">
+                <div id="gamecount">
+                    <label>Games Played</label>
+                    <p id="gamenumber">1</p>
+                </div>
+            </div>
+            <div class="score">
+                <div id="xscore" style="border: 2px solid yellow;">
+                    <label id="p1label">${player1name} <i class="fa-solid fa-x fa-xs"></i></label>
+                    <div>Score : <a id="xscore1">0</a></div>
+                </div>
+                <div id="oscore">
+                    <label id="p2label">${player2name} <i class="fa-solid fa-o fa-xs"></i></label>
+                    <div>Score : <a id="oscore1">0</a></div>
+                </div>
+            </div>
+            <div id="restart">
+                <button onclick="restart();">Restart</button>
+                <button onclick="location.reload();">New Game</button>
+            </div>
+        </div>
+    `;
+
+    st();
+}
+
 function st() {
-    
-    board = ["", "", "", "", "", "", "", "", ""];
+    board = Array(9).fill("");
     turnO = false;
     gameActive = true;
-    
-    document.getElementById("btns").innerHTML = `
-        <button class="box"></button><button class="box"></button><button class="box"></button>
-        <button class="box"></button><button class="box"></button><button class="box"></button>
-        <button class="box"></button><button class="box"></button><button class="box"></button>`;
-     document.getElementById("restart").innerHTML = `<button onclick="restart()">Restart</button>`;
-    
+
+    document.getElementById("btns").innerHTML = Array(9).fill('<button class="box"></button>').join("");
+
     let boxes = document.querySelectorAll(".box");
-    
+
     boxes.forEach((box, index) => {
-        box.addEventListener('click', function () {
-  
-            if (!gameActive) return;
+        box.addEventListener("click", () => {
+            if (!gameActive || board[index] !== "") return;
+            if (mode === "computer" && turnO) return;
 
             let currentSymbol = turnO ? "O" : "X";
-            let iconHtml = turnO ? '<i class="fa-solid fa-o fa-xl"></i>' : '<i class="fa-solid fa-x fa-xl"></i>';
+            let icon = turnO ? '<i class="fa-solid fa-o fa-xl"></i>' : '<i class="fa-solid fa-x fa-xl"></i>';
 
             board[index] = currentSymbol;
-            box.innerHTML = iconHtml;
-            box.style.color = 'white';
+            box.innerHTML = icon;
+            box.style.color = "white";
             box.disabled = true;
-            
+
             checkWinner(board);
+            if (!gameActive) return;
 
-
-            turnO = !turnO; 
-            if(!turnO){
-                document.getElementById("xscore").style.border = "2px solid yellow";
-                document.getElementById("oscore").style.border = "none";
-            }else{
+            if (mode === "two") {
+                turnO = !turnO;
+                document.getElementById("xscore").style.border = turnO ? "none" : "2px solid yellow";
+                document.getElementById("oscore").style.border = turnO ? "2px solid yellow" : "none";
+            } else {
+                turnO = true;
                 document.getElementById("oscore").style.border = "2px solid yellow";
                 document.getElementById("xscore").style.border = "none";
+
+                setTimeout(computerMove, 400);
             }
         });
     });
 }
 
+function computerMove() {
+    if (!gameActive) return;
 
-start.addEventListener("click", function(){
-   st();
-})
-function restart(){
-    st();
+    let empty = board.reduce((acc, val, idx) => (val === "" ? [...acc, idx] : acc), []);
+    if (empty.length === 0) return;
+
+    let randomIndex = empty[Math.floor(Math.random() * empty.length)];
+    let boxes = document.querySelectorAll(".box");
+
+    board[randomIndex] = "O";
+    boxes[randomIndex].innerHTML = '<i class="fa-solid fa-o fa-xl"></i>';
+    boxes[randomIndex].style.color = "white";
+    boxes[randomIndex].disabled = true;
+
+    checkWinner(board);
+    if (!gameActive) return;
+
+    turnO = false;
+    document.getElementById("xscore").style.border = "2px solid yellow";
+    document.getElementById("oscore").style.border = "none";
+}
+
+function restart() {
     gamesplayed++;
     document.getElementById("gamenumber").innerHTML = gamesplayed;
+    st();
 }
+
 function checkWinner(board) {
-    let winner;
-    winPatterns.forEach((pattern) => {
+    let winner = false;
+    let boxes = document.querySelectorAll(".box");
+
+    for (let pattern of winPatterns) {
         let [a, b, c] = pattern;
+
         if (board[a] !== "" && board[a] === board[b] && board[b] === board[c]) {
-            document.getElementById("btns").innerHTML = `${board[a]} Won!`
-          
-             if(board[a] === "X"){
+            // Winning tiles highlight
+            boxes[a].classList.add("win-tile");
+            boxes[b].classList.add("win-tile");
+            boxes[c].classList.add("win-tile");
+
+            let winnerName = "";
+            if (board[a] === "X") {
                 xscore++;
-                 document.getElementById("xscore1").innerHTML = `${xscore}`;
-             }else{
+                document.getElementById("xscore1").innerHTML = xscore;
+                winnerName = player1.value.trim();
+            } else {
                 oscore++;
-                document.getElementById("oscore1").innerHTML = `${oscore}`;
-             }
-             
-            gameActive = false; 
-        }
-        let isdraw = !board.includes("");
-        if(isdraw){
-            document.getElementById("btns").innerHTML = `Draw!`
-        }
-    });
-}
+                document.getElementById("oscore1").innerHTML = oscore;
+                winnerName = (mode === "two") ? player2.value.trim() : "Computer";
+            }
 
+            gameActive = false;
+            winner = true;
 
-function scorecard(){
-    let player1name = player1.value.trim();
-    let player2name = player2.value.trim();
-    if(player1name !== "" && player2name !== ""){
-        
-    document.getElementById("game-box").innerHTML = `               
-     <div class="scorecard">
-                    <div class="gamenumber">
-                        <div id="gamecount">
-                            <label>Games Played</label>
-                            <p id="gamenumber">1</p>
-                        </div>
+            // Stylish Winner Banner
+            setTimeout(() => {
+                document.getElementById("btns").innerHTML = `
+                    <div class="winner-msg">
+                        <i class="fa-solid fa-trophy trophy-icon"></i>
+                        <h2>${winnerName} Wins!</h2>
                     </div>
-                   <div class="score">
-                     <div id="xscore">
-                        <label>${player1name} <i class="fa-solid fa-x fa-xs"></i><br></label>
-                        <div>Score:<a id="xscore1"></a></div>
-                    </div>
-                    <div id="oscore">
-                        <label>${player2name} <i class="fa-solid fa-o fa-xs"></i><br></label>
-                        <div>Score:<a id="oscore1"></a></div>
-                    </dix>
-                    </div>
-                   </div>
-                    
-                     <div id="restart">
-                        <button onclick="restart()">Restart</button>   
-                    </div>
-                    
-                    </div>`
-        
-    }else{
-        return alert("ADD NAMES!");
+                `;
+            }, 600);
+            break;
+        }
+    }
+
+    if (!winner && !board.includes("")) {
+        gameActive = false;
+        setTimeout(() => {
+            document.getElementById("btns").innerHTML = `
+                <div class="winner-msg draw-msg">
+                    <i class="fa-solid fa-handshake trophy-icon"></i>
+                    <h2>It's a Draw!</h2>
+                </div>
+            `;
+        }, 400);
     }
 }
-
-
