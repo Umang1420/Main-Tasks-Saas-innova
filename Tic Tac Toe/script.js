@@ -13,6 +13,7 @@ let winPatterns = [
 ];
 
 start.addEventListener("click",function(){
+    let board = ["","","","","","","","",""] 
     document.getElementById("btns").innerHTML = `
                                                 <button class="box"></button>
                                                 <button class="box"></button>
@@ -26,15 +27,17 @@ start.addEventListener("click",function(){
 
             let boxes = document.querySelectorAll(".box");
             let turnO = false;
-            boxes.forEach((box) => {
+            boxes.forEach((box,index) => {
                 box.addEventListener('click', function () {
                     if (turnO) {
+                        board[index] = 'O';
                         box.innerHTML = `<i class="fa-solid fa-o fa-xl"></i>`;
                         box.style.color = 'white';
                         turnO = false;
                         box.disabled = true;
                         
                     } else {
+                        board[index] = "X"
                         box.innerHTML = '<i class="fa-solid fa-x fa-xl"></i>';
                         box.style.color = 'white';
                         turnO = true;
@@ -50,6 +53,6 @@ start.addEventListener("click",function(){
 
 
 
-function checkWinner(){
-    
+function checkWinner(board){
+    winPatterns.forEach(pattern)
 }
