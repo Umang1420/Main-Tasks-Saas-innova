@@ -131,7 +131,7 @@ button{
     padding: 10px;
     border-radius: 20px;
 }
-/* Winner Banner Styling */
+
 .winner-msg {
     width: 100%;
     max-width: 320px;
@@ -159,7 +159,7 @@ button{
     color: #7f8c8d;
 }
 
-/* Winning Box Glow */
+
 .win-tile {
     background-color: #27ae60 !important;
     border-color: #2ecc71 !important;
