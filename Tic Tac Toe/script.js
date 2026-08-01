@@ -26,6 +26,25 @@ function showComputer() {
     document.getElementById("pl2div").style.display = "none";
 }
 
+function updateTurnHighlight() {
+    let xBox = document.getElementById("xscore");
+    let oBox = document.getElementById("oscore");
+
+    if (turnO) {
+        xBox.style.border = "2px solid transparent";
+        xBox.style.boxShadow = "none";
+        
+        oBox.style.border = "2px solid #e74c3c";
+        oBox.style.boxShadow = "0 0 12px rgba(231, 76, 60, 0.6)";
+    } else {
+        oBox.style.border = "2px solid transparent";
+        oBox.style.boxShadow = "none";
+
+        xBox.style.border = "2px solid #2ecc71";
+        xBox.style.boxShadow = "0 0 12px rgba(46, 204, 113, 0.6)";
+    }
+}
+
 function scorecard() {
     let player1name = player1.value.trim();
     if (!player1name) {
@@ -53,11 +72,11 @@ function scorecard() {
                 </div>
             </div>
             <div class="score">
-                <div id="xscore" style="border: 2px solid yellow;">
+                <div id="xscore" style="transition: all 0.3s ease; border-radius: 8px;">
                     <label id="p1label">${player1name} <i class="fa-solid fa-x fa-xs"></i></label>
                     <div>Score : <a id="xscore1">0</a></div>
                 </div>
-                <div id="oscore">
+                <div id="oscore" style="transition: all 0.3s ease; border-radius: 8px;">
                     <label id="p2label">${player2name} <i class="fa-solid fa-o fa-xs"></i></label>
                     <div>Score : <a id="oscore1">0</a></div>
                 </div>
@@ -78,6 +97,7 @@ function st() {
     gameActive = true;
 
     document.getElementById("btns").innerHTML = Array(9).fill('<button class="box"></button>').join("");
+    updateTurnHighlight();
 
     let boxes = document.querySelectorAll(".box");
 
@@ -99,14 +119,11 @@ function st() {
 
             if (mode === "two") {
                 turnO = !turnO;
-                document.getElementById("xscore").style.border = turnO ? "none" : "2px solid yellow";
-                document.getElementById("oscore").style.border = turnO ? "2px solid yellow" : "none";
+                updateTurnHighlight();
             } else {
                 turnO = true;
-                document.getElementById("oscore").style.border = "2px solid yellow";
-                document.getElementById("xscore").style.border = "none";
-
-                setTimeout(computerMove, 400);
+                updateTurnHighlight();
+                setTimeout(computerMove, 500);
             }
         });
     });
@@ -115,23 +132,49 @@ function st() {
 function computerMove() {
     if (!gameActive) return;
 
-    let empty = board.reduce((acc, val, idx) => (val === "" ? [...acc, idx] : acc), []);
-    if (empty.length === 0) return;
+    function findBestIndex(symbol) {
+        for (let pattern of winPatterns) {
+            let [a, b, c] = pattern;
+            let values = [board[a], board[b], board[c]];
+            
+            if (values.filter(v => v === symbol).length === 2 && values.includes("")) {
+                if (board[a] === "") return a;
+                if (board[b] === "") return b;
+                if (board[c] === "") return c;
+            }
+        }
+        return null;
+    }
 
-    let randomIndex = empty[Math.floor(Math.random() * empty.length)];
+    let moveIndex = null;
+
+    moveIndex = findBestIndex("O");
+
+    if (moveIndex === null) {
+        moveIndex = findBestIndex("X");
+    }
+
+    if (moveIndex === null && board[4] === "") {
+        moveIndex = 4;
+    }
+
+    if (moveIndex === null) {
+        let empty = board.reduce((acc, val, idx) => (val === "" ? [...acc, idx] : acc), []);
+        if (empty.length === 0) return;
+        moveIndex = empty[Math.floor(Math.random() * empty.length)];
+    }
+
     let boxes = document.querySelectorAll(".box");
-
-    board[randomIndex] = "O";
-    boxes[randomIndex].innerHTML = '<i class="fa-solid fa-o fa-xl"></i>';
-    boxes[randomIndex].style.color = "white";
-    boxes[randomIndex].disabled = true;
+    board[moveIndex] = "O";
+    boxes[moveIndex].innerHTML = '<i class="fa-solid fa-o fa-xl"></i>';
+    boxes[moveIndex].style.color = "white";
+    boxes[moveIndex].disabled = true;
 
     checkWinner(board);
     if (!gameActive) return;
 
     turnO = false;
-    document.getElementById("xscore").style.border = "2px solid yellow";
-    document.getElementById("oscore").style.border = "none";
+    updateTurnHighlight();
 }
 
 function restart() {
@@ -148,7 +191,6 @@ function checkWinner(board) {
         let [a, b, c] = pattern;
 
         if (board[a] !== "" && board[a] === board[b] && board[b] === board[c]) {
-            // Winning tiles highlight
             boxes[a].classList.add("win-tile");
             boxes[b].classList.add("win-tile");
             boxes[c].classList.add("win-tile");
@@ -167,7 +209,6 @@ function checkWinner(board) {
             gameActive = false;
             winner = true;
 
-            // Stylish Winner Banner
             setTimeout(() => {
                 document.getElementById("btns").innerHTML = `
                     <div class="winner-msg">
